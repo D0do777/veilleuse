@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Microbit LED Control</title>
+
+<style>
+
+body{
+font-family: Arial, sans-serif;
+background:#111;
+color:white;
+text-align:center;
+margin:0;
+padding:20px;
+}
+
+h1{
+font-size:22px;
+margin-bottom:30px;
+}
+
+.switch{
+position:relative;
+display:inline-block;
+width:80px;
+height:40px;
+}
+
+.switch input{
+display:none;
+}
+
+.slider{
+position:absolute;
+cursor:pointer;
+top:0;
+left:0;
+right:0;
+bottom:0;
+background:#555;
+border-radius:40px;
+transition:0.3s;
+}
+
+.slider:before{
+position:absolute;
+content:"";
+height:30px;
+width:30px;
+left:5px;
+bottom:5px;
+background:white;
+border-radius:50%;
+transition:0.3s;
+}
+
+input:checked + .slider{
+background:#00c853;
+}
+
+input:checked + .slider:before{
+transform:translateX(40px);
+}
+
+#colors{
+margin-top:40px;
+display:grid;
+grid-template-columns:repeat(3,1fr);
+gap:15px;
+opacity:0.3;
+pointer-events:none;
+}
+
+#colors.active{
+opacity:1;
+pointer-events:auto;
+}
+
+.colorBtn{
+height:60px;
+border-radius:12px;
+border:none;
+}
+
+.red{background:#ff3b30;}
+.green{background:#34c759;}
+.blue{background:#007aff;}
+.yellow{background:#ffd60a;}
+.purple{background:#af52de;}
+.white{background:white;}
+
+.connectBtn{
+margin-top:30px;
+padding:10px 20px;
+font-size:16px;
+border:none;
+border-radius:8px;
+background:#444;
+color:white;
+}
+
+</style>
+</head>
+
+<body>
+
+<h1>LED Control</h1>
+
+<button class="connectBtn" onclick="connect()">Connect Microbit</button>
+
+<br><br>
+
+<label class="switch">
+<input type="checkbox" id="toggle">
+<span class="slider"></span>
+</label>
+
+<div id="colors">
+
+<button class="colorBtn red" onclick="sendColor('red')"></button>
+<button class="colorBtn green" onclick="sendColor('green')"></button>
+<button class="colorBtn blue" onclick="sendColor('blue')"></button>
+<button class="colorBtn yellow" onclick="sendColor('yellow')"></button>
+<button class="colorBtn purple" onclick="sendColor('purple')"></button>
+<button class="colorBtn white" onclick="sendColor('white')"></button>
+
+</div>
+
+<script>
+
+let device;
+let characteristic;
+
+const toggle = document.getElementById("toggle");
+const colors = document.getElementById("colors");
+
+toggle.addEventListener("change", () => {
+
+if(toggle.checked){
+colors.classList.add("active");
+}else{
+colors.classList.remove("active");
+}
+
+});
+
+async function connect(){
+
+try{
+
+device = await navigator.bluetooth.requestDevice({
+filters:[{namePrefix:"BBC micro:bit"}],
+optionalServices:["e95d0753-251d-470a-a062-fa1922dfa9a8"]
+});
+
+const server = await device.gatt.connect();
+
+const service = await server.getPrimaryService("e95d0753-251d-470a-a062-fa1922dfa9a8");
+
+characteristic = await service.getCharacteristic("e95d5404-251d-470a-a062-fa1922dfa9a8");
+
+alert("Microbit connecté");
+
+}catch(error){
+console.log(error);
+}
+
+}
+
+function sendColor(color){
+
+if(!toggle.checked) return;
+
+let value;
+
+switch(color){
+
+case "red":
+value = 1;
+break;
+
+case "green":
+value = 2;
+break;
+
+case "blue":
+value = 3;
+break;
+
+case "yellow":
+value = 4;
+break;
+
+case "purple":
+value = 5;
+break;
+
+case "white":
+value = 6;
+break;
+
+}
+
+if(characteristic){
+
+const data = new Uint8Array([value]);
+
+characteristic.writeValue(data);
+
+}
+
+}
+
+</script>
+
+</body>
+</html>
