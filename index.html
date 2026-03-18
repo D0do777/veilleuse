@@ -16,9 +16,13 @@ margin:0;
 padding:20px;
 }
 
+/* TITRE */
+
 h1{
 margin-bottom:20px;
 }
+
+/* BOUTON CONNECTION */
 
 .connectBtn{
 margin-bottom:20px;
@@ -29,6 +33,8 @@ border-radius:10px;
 background:#333;
 color:white;
 }
+
+/* SWITCH */
 
 .switch{
 position:relative;
@@ -71,6 +77,12 @@ background:#34c759;
 
 input:checked + .slider:before{
 transform:translateX(34px);
+}
+
+/* PAGE ACCUEIL */
+
+#homePage{
+display:block;
 }
 
 #colors{
@@ -116,29 +128,42 @@ animation:rainbowMove 4s linear infinite;
 100%{background-position:0% 50%}
 }
 
-/* PREVIEW COULEUR */
+/* PAGE COULEUR */
+
+#colorPage{
+display:none;
+}
 
 #preview{
-display:none;
 width:100%;
-height:45vh;
-border-radius:18px;
-margin-top:25px;
+height:50vh;
+border-radius:20px;
+margin-top:20px;
 }
 
-#brightnessBox{
-display:none;
-margin-top:15px;
-}
-
-input[type=range]{
+#brightnessSlider{
 width:90%;
+margin-top:20px;
+}
+
+.backBtn{
+margin-top:25px;
+padding:12px 20px;
+border:none;
+border-radius:10px;
+background:#444;
+color:white;
+font-size:16px;
 }
 
 </style>
 </head>
 
 <body>
+
+<!-- PAGE PRINCIPALE -->
+
+<div id="homePage">
 
 <h1>LED Control</h1>
 
@@ -153,36 +178,42 @@ width:90%;
 
 <div id="colors">
 
-<button class="colorBtn red" onclick="selectColor('#ff3b30',1)"></button>
-<button class="colorBtn green" onclick="selectColor('#34c759',2)"></button>
-<button class="colorBtn blue" onclick="selectColor('#007aff',3)"></button>
+<button class="colorBtn red" onclick="openColor('#ff3b30',1)"></button>
+<button class="colorBtn green" onclick="openColor('#34c759',2)"></button>
+<button class="colorBtn blue" onclick="openColor('#007aff',3)"></button>
 
-<button class="colorBtn yellow" onclick="selectColor('#ffd60a',4)"></button>
-<button class="colorBtn purple" onclick="selectColor('#af52de',5)"></button>
-<button class="colorBtn white" onclick="selectColor('#ffffff',6)"></button>
+<button class="colorBtn yellow" onclick="openColor('#ffd60a',4)"></button>
+<button class="colorBtn purple" onclick="openColor('#af52de',5)"></button>
+<button class="colorBtn white" onclick="openColor('#ffffff',6)"></button>
 
-<button class="colorBtn multi" onclick="selectColor('rainbow',7)"></button>
-<button class="colorBtn rainbow" onclick="selectColor('rainbowMove',8)"></button>
+<button class="colorBtn multi" onclick="openColor('multi',7)"></button>
+<button class="colorBtn rainbow" onclick="openColor('rainbow',8)"></button>
 
 </div>
 
+</div>
+
+<!-- PAGE COULEUR -->
+
+<div id="colorPage">
+
 <div id="preview"></div>
 
-<div id="brightnessBox">
-<p>Luminosité</p>
 <input type="range" min="10" max="100" value="100" id="brightnessSlider">
+
+<br>
+
+<button class="backBtn" onclick="goBack()">Retour</button>
+
 </div>
 
 <script>
 
 let device;
 let characteristic;
-let currentColor="#ffffff";
 
 const toggle=document.getElementById("toggle")
 const colors=document.getElementById("colors")
-const preview=document.getElementById("preview")
-const brightnessBox=document.getElementById("brightnessBox")
 
 toggle.addEventListener("change",()=>{
 
@@ -190,11 +221,11 @@ if(toggle.checked){
 colors.classList.add("active")
 }else{
 colors.classList.remove("active")
-preview.style.display="none"
-brightnessBox.style.display="none"
 }
 
 })
+
+/* BLUETOOTH */
 
 async function connect(){
 
@@ -219,32 +250,47 @@ console.log(error)
 
 }
 
-function selectColor(color,value){
+/* NAVIGATION INTERNE */
+
+function openColor(color,value){
 
 if(!toggle.checked) return
 
-preview.style.display="block"
-brightnessBox.style.display="block"
+document.getElementById("homePage").style.display="none"
+document.getElementById("colorPage").style.display="block"
 
-if(color==="rainbow"){
+const preview=document.getElementById("preview")
+
+preview.style.animation="none"
+
+if(color==="multi"){
 preview.style.background="linear-gradient(45deg,red,orange,yellow,green,blue,purple)"
 }
 
-else if(color==="rainbowMove"){
+else if(color==="rainbow"){
 preview.style.background="linear-gradient(270deg,red,orange,yellow,green,blue,purple)"
 preview.style.backgroundSize="600% 600%"
 preview.style.animation="rainbowMove 4s linear infinite"
 }
 
 else{
-preview.style.animation="none"
 preview.style.background=color
-currentColor=color
 }
 
 sendColor(value)
 
 }
+
+/* RETOUR */
+
+function goBack(){
+
+document.getElementById("homePage").style.display="block"
+document.getElementById("colorPage").style.display="none"
+
+}
+
+/* ENVOI COULEUR */
 
 function sendColor(value){
 
@@ -257,13 +303,15 @@ characteristic.writeValue(data)
 
 }
 
+/* LUMINOSITÉ */
+
 const slider=document.getElementById("brightnessSlider")
 
 slider.addEventListener("input",()=>{
 
-let b=slider.value/100
+let brightness=slider.value/100
 
-preview.style.filter="brightness("+b+")"
+document.getElementById("preview").style.filter="brightness("+brightness+")"
 
 if(characteristic){
 
