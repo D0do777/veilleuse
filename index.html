@@ -21,7 +21,7 @@ margin-bottom:20px;
 }
 
 .connectBtn{
-margin-bottom:25px;
+margin-bottom:20px;
 padding:12px 20px;
 font-size:16px;
 border:none;
@@ -116,20 +116,23 @@ animation:rainbowMove 4s linear infinite;
 100%{background-position:0% 50%}
 }
 
-.brightnessBox{
-margin-top:35px;
-opacity:.3;
-pointer-events:none;
+/* PREVIEW COULEUR */
+
+#preview{
+display:none;
+width:100%;
+height:45vh;
+border-radius:18px;
+margin-top:25px;
 }
 
-.brightnessBox.active{
-opacity:1;
-pointer-events:auto;
+#brightnessBox{
+display:none;
+margin-top:15px;
 }
 
 input[type=range]{
 width:90%;
-margin-top:10px;
 }
 
 </style>
@@ -150,44 +153,45 @@ margin-top:10px;
 
 <div id="colors">
 
-<button class="colorBtn red" onclick="sendColor(1)"></button>
-<button class="colorBtn green" onclick="sendColor(2)"></button>
-<button class="colorBtn blue" onclick="sendColor(3)"></button>
+<button class="colorBtn red" onclick="selectColor('#ff3b30',1)"></button>
+<button class="colorBtn green" onclick="selectColor('#34c759',2)"></button>
+<button class="colorBtn blue" onclick="selectColor('#007aff',3)"></button>
 
-<button class="colorBtn yellow" onclick="sendColor(4)"></button>
-<button class="colorBtn purple" onclick="sendColor(5)"></button>
-<button class="colorBtn white" onclick="sendColor(6)"></button>
+<button class="colorBtn yellow" onclick="selectColor('#ffd60a',4)"></button>
+<button class="colorBtn purple" onclick="selectColor('#af52de',5)"></button>
+<button class="colorBtn white" onclick="selectColor('#ffffff',6)"></button>
 
-<button class="colorBtn multi" onclick="sendColor(7)"></button>
-<button class="colorBtn rainbow" onclick="sendColor(8)"></button>
+<button class="colorBtn multi" onclick="selectColor('rainbow',7)"></button>
+<button class="colorBtn rainbow" onclick="selectColor('rainbowMove',8)"></button>
 
 </div>
 
-<div class="brightnessBox" id="brightnessBox">
+<div id="preview"></div>
 
-<p>Brightness</p>
-
-<input type="range" min="0" max="100" value="80" id="brightnessSlider">
-
+<div id="brightnessBox">
+<p>Luminosité</p>
+<input type="range" min="10" max="100" value="100" id="brightnessSlider">
 </div>
 
 <script>
 
 let device;
 let characteristic;
+let currentColor="#ffffff";
 
 const toggle=document.getElementById("toggle")
 const colors=document.getElementById("colors")
+const preview=document.getElementById("preview")
 const brightnessBox=document.getElementById("brightnessBox")
 
 toggle.addEventListener("change",()=>{
 
 if(toggle.checked){
 colors.classList.add("active")
-brightnessBox.classList.add("active")
 }else{
 colors.classList.remove("active")
-brightnessBox.classList.remove("active")
+preview.style.display="none"
+brightnessBox.style.display="none"
 }
 
 })
@@ -215,14 +219,38 @@ console.log(error)
 
 }
 
-function sendColor(value){
+function selectColor(color,value){
 
 if(!toggle.checked) return
+
+preview.style.display="block"
+brightnessBox.style.display="block"
+
+if(color==="rainbow"){
+preview.style.background="linear-gradient(45deg,red,orange,yellow,green,blue,purple)"
+}
+
+else if(color==="rainbowMove"){
+preview.style.background="linear-gradient(270deg,red,orange,yellow,green,blue,purple)"
+preview.style.backgroundSize="600% 600%"
+preview.style.animation="rainbowMove 4s linear infinite"
+}
+
+else{
+preview.style.animation="none"
+preview.style.background=color
+currentColor=color
+}
+
+sendColor(value)
+
+}
+
+function sendColor(value){
 
 if(characteristic){
 
 const data=new Uint8Array([value])
-
 characteristic.writeValue(data)
 
 }
@@ -233,12 +261,13 @@ const slider=document.getElementById("brightnessSlider")
 
 slider.addEventListener("input",()=>{
 
-let brightnessValue=slider.value
+let b=slider.value/100
+
+preview.style.filter="brightness("+b+")"
 
 if(characteristic){
 
-const data=new Uint8Array([20,brightnessValue])
-
+const data=new Uint8Array([20,slider.value])
 characteristic.writeValue(data)
 
 }
